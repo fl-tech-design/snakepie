@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import json
+import pathlib as pl
 import random
 import time
 from enum import Enum
@@ -15,16 +16,17 @@ class Direction(Enum):
 
 
 def r_data():
-    with open("h_score.json", "r") as app_data_file:
+    with open(path_h_score_file, "r") as app_data_file:
         app_data_dict = json.load(app_data_file)
     return app_data_dict
 
 
 def w_h_score():
-    with open("h_score.json", "w") as file:
+    with open(path_h_score_file, "w") as file:
         json.dump(highscore_data, file)
 
 
+path_h_score_file = str(pl.Path().absolute()) + "/PycharmProjects/snakepie/h_score.json"
 speed = 10
 level = 1
 gamestat = 0
