@@ -322,7 +322,6 @@ class GamePics:
 
 
 WIN_W, WIN_H, SIZE = 1080, 720, 20
-
 WIN_M_W, WIN_M_H = WIN_W / 3, WIN_H / 3
 FG_A, FG_P, BG_G = (0, 255, 0), (255, 255, 255), (0, 0, 0)
 Y_TOP, Y_BOT = 30, 670
