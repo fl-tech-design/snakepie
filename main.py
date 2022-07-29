@@ -10,7 +10,9 @@ import time
 from enum import Enum
 
 import pygame as pg
-from pygame.locals import K_UP, K_DOWN, K_LEFT, K_RIGHT, K_ESCAPE, K_SPACE
+
+pg.init()
+pg.display.set_caption("snakekpie")
 
 
 class Direction(Enum):
@@ -21,246 +23,298 @@ class Direction(Enum):
     LEFT = 4
 
 
-def r_data():
-    """ READ THE HIGHSCOREFILE AND RETURN A DICT WITH THE DATA"""
-    with open(PA_HS_FILE, "r", encoding='UTF-8') as app_data_file:
-        app_data_dict = json.load(app_data_file)
-    return app_data_dict
+class Fon:
+    """this class defines the game fonts"""
+    fo100 = pg.font.SysFont("Arial", 100)
+    fo40 = pg.font.SysFont("Arial", 40)
+    fo23 = pg.font.SysFont("Arial", 23)
+    fo16 = pg.font.SysFont("Arial", 16)
 
 
-def w_h_score():
-    """ WRITE THE NEW HIGHSCORE TO THE .JSON FILE """
-    with open(PA_HS_FILE, "w", encoding='UTF-8') as file:
-        json.dump(highscore_data, file)
-
-
-# define constants
-PA_HS_FILE = str(pl.Path().absolute()) + "/PycharmProjects/snakepie/h_score.json"
-WIN_W, WIN_H = 1080, 720
-SCALE = 20
-
-pg.init()
-pg.display.set_caption("snakekpie")
-win = pg.display.set_mode((WIN_W, WIN_H))
-refresh_controller = pg.time.Clock()
-
-speed = 10
-level = 1
-game_stat = 0
-objects = []
-
-snake_pos = [250, 250]
-snake_body = [[250, 250],
-              [240, 250],
-              [230, 250]]
-
-food_pos = [random.randint(20, 1000), random.randint(20, 700)]
-input_rect = pg.Rect(200, 200, 140, 32)
-user_text = " "
-active = False
-color_active = pg.Color('green')
-color_passive = pg.Color('blue')
-color = color_passive
-
-score = 0
-FONT60 = pg.font.SysFont("Arial", 60)
-FONT40 = pg.font.SysFont("Arial", 40)
-FONT16 = pg.font.SysFont("Arial", 16)
-
-highscore_data = r_data()
-
-h_score_str = list(highscore_data.keys())
-print(h_score_str)
-h_score_int = []
-
-for i, n in enumerate(h_score_str):
-    h_score_int.append(int(n))
-print(h_score_int)
-h_score_int.sort()
-print(h_score_int)
-
-h_score_alt = h_score_int[-1]
-h_score_neu = h_score_alt
-h_score_name = highscore_data[str(h_score_alt)]
-print(h_score_alt)
-print(h_score_name)
-
-
-def handle_keys(direction):
-    """ handle the key events."""
-    global game_stat, active, color, user_text
-    new_direction = direction
-    for event in pg.event.get():
-        if event.type == pg.QUIT:
-            pg.quit()
-            sys.exit()
-        if event.type == pg.MOUSEBUTTONDOWN:
-            if input_rect.collidepoint(event.pos):
-                active = True
-            else:
-                active = False
-        if event.type == pg.KEYDOWN:
-            if event.key == K_UP and direction != Direction.DOWN:
-                new_direction = Direction.UP
-            if event.key == K_DOWN and direction != Direction.UP:
-                new_direction = Direction.DOWN
-            if event.key == K_RIGHT and direction != Direction.LEFT:
-                new_direction = Direction.RIGHT
-            if event.key == K_LEFT and direction != Direction.RIGHT:
-                new_direction = Direction.LEFT
-            if event.key == K_ESCAPE:
-                game_stat = 0
-            if event.key == K_SPACE:
-                game_stat = 1
-            if event.key == pg.K_BACKSPACE:
-                # get text input from 0 to -1 i.e. end.
-                user_text = user_text[:-1]
-            # Unicode standard is used for string
-            # formation
-            else:
-                user_text += event.unicode
-            if active:
-                color = color_active
-            else:
-                color = color_passive
-
-    return new_direction
-
-
-def move_snake(direction):
-    """ change the direction of the snake"""
-    if direction == Direction.UP:
-        snake_pos[1] -= SCALE
-    if direction == Direction.DOWN:
-        snake_pos[1] += SCALE
-    if direction == Direction.LEFT:
-        snake_pos[0] -= SCALE
-    if direction == Direction.RIGHT:
-        snake_pos[0] += SCALE
-    snake_body.insert(0, list(snake_pos))
-
-
-def generate_new_food():
-    """ create a new food in the window"""
-    food_pos[0] = random.randint(5, ((WIN_W - 2) // SCALE)) * SCALE
-    food_pos[1] = random.randint(5, ((WIN_H - 2) // SCALE)) * SCALE
-
-
-def get_food():
-    """ check if the snake the snake get the food. create a new food if the snake hit the food"""
-    global score
-    if abs(snake_pos[0] - food_pos[0]) < 20 and abs(snake_pos[1] - food_pos[1]) < 20:
-        score += 10
-        generate_new_food()
-        if score % 100 == 0:
-            speed_up()
-    else:
-        snake_body.pop()
-
-
-def speed_up():
-    """ raise the speed and the level of the game"""
-    global speed, level
-    speed += 2
-    level += 1
-
-
-def repaint():
-    """ repaint the display for moving the snake"""
-    win.fill(pg.Color("black"))
-    for body in snake_body:
-        pg.draw.circle(win, pg.Color("purple"), (body[0], body[1]), int(SCALE / 2))
-    pg.draw.rect(win, pg.Color("red"), pg.Rect(food_pos[0] - int(SCALE / 2),
-                                               food_pos[1] - int(SCALE / 2), SCALE, SCALE))
-
-
-def game_over_message():
-    """ this message will shown if the game is over"""
-    show_text("GAME OVER", "grey", (int(WIN_W / 2), int(WIN_H / 2) - 100), FONT40)
-    show_text(f"Score: {score}", "white", (int(WIN_W / 2), int(WIN_H / 2)), FONT40)
-    if h_score_neu > h_score_alt:
-        show_text(f"Neuer Highscore: {h_score_neu}", "grey", (int(WIN_W / 2),
-                                                              int(WIN_H / 2) + 200), FONT40)
-        highscore_data[f"{h_score_neu}"] = "___"
-
-        w_h_score()
-    else:
-        show_text("Leider Highscore nicht geschlagen", "grey", (int(WIN_W / 2),
-                                                                int(WIN_H / 2) + 200), FONT40)
-    pg.draw.rect(win, color, input_rect)
-    text_surface = FONT16.render(user_text, True, (255, 255, 255))
-    win.blit(text_surface, (input_rect.x + 5, input_rect.y + 5))
-    input_rect.w = max(100, text_surface.get_width() + 10)
-    pg.display.flip()
-    time.sleep(5)
+def quit_game():
+    """ quit the game and close the window"""
+    pg.quit()
     sys.exit(0)
 
 
-def show_text(text, col, pos, fo_st):
-    """ a small def to create a textfield"""
-    act_text = fo_st.render(text, True, pg.Color(col))
-    rect_text = act_text.get_rect()
-    rect_text.midtop = pos
-    win.blit(act_text, rect_text)
+def r_data():
+    """ READ THE HIGH-SCORE-FILE AND RETURN A DICT WITH THE DATA"""
+    with open(PA_HS_FILE, "r", encoding='UTF-8') as file:
+        data = json.load(file)
+    return data
 
 
-def game_over():
-    """ Check the game state if it game over"""
-    if snake_pos[0] < 0 or snake_pos[0] > WIN_W - SCALE:
-        game_over_message()
-    if snake_pos[1] < 0 or snake_pos[1] > WIN_H - SCALE:
-        game_over_message()
-    for blob in snake_body[1:]:
-        if snake_pos[0] == blob[0] and snake_pos[1] == blob[1]:
-            game_over_message()
+class SnakeGame:
+    """ the class snakegame include the whole game"""
+
+    def __init__(self):
+        self.direction = Direction.RIGHT
+        self.win = pg.display.set_mode((WIN_W, WIN_H))
+        self.clock = pg.time.Clock()
+        self.pg_logo = pg.image.load(PA_PG_LOGO)
+        self.sp_logo = pg.image.load(PA_SP_LOGO)
+        self.go_logo = pg.image.load(PA_GO_LOGO)
+        self.food_pic = pg.image.load(PA_F_PIC)
+        self.snake_head = pg.image.load(PA_BODY)
+        self.speed, self.level = 10, 1
+        self.g_stat, self.n_stat = 0, 0
+        self.s_pos = [250, 250]
+        self.s_body = [[250, 250],
+                       [240, 250],
+                       [230, 250]]
+
+        self.f_pos = [random.randint(20, 1000), random.randint(20, 700)]
+
+        self.score = 0
+        self.hs_stat = False
+        self.hs_data = r_data()
+        self.hs_int = []
+        self.load_hs_list()
+
+        self.hs_old = self.hs_int[0]
+        self.hs_new = self.hs_old
+
+        # all things for the input field for high-score name
+        self.active = False
+        self.i_rect = pg.Rect(WIN_M_W, Y_BOT - 20, 90, 40)
+
+        self.user_text = ""
+
+        self.main_loop()
+
+    def check_hs(self):
+        """ check if a new high-score exist"""
+        if self.score > self.hs_new:
+            self.hs_new = self.score
+            self.hs_stat = True
+        else:
+            self.hs_stat = False
+
+    def entry_name(self):
+        """ make a textfield for the high-score name"""
+        self.n_stat = 1
+        while self.n_stat:
+            for event in pg.event.get():
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_RETURN:
+                        self.user_text = self.user_text[:]
+                        self.n_stat = 0
+                    else:
+                        self.user_text += event.unicode
+                    if event.key == pg.K_BACKSPACE:
+                        print("Backspace gedrückt")
+            pg.draw.rect(self.win, BG_G, self.i_rect)
+            text_surface = Fon.fo40.render(self.user_text, True, FG_P)
+            self.win.blit(text_surface, (self.i_rect.x + 2, self.i_rect.y + 2))
+            pg.display.flip()
+
+    def event_control(self):
+        """ handle the key events."""
+        for event in pg.event.get():
+            if event.type == pg.MOUSEBUTTONDOWN:
+                if self.i_rect.collidepoint(event.pos):
+                    self.active = True
+                else:
+                    self.active = False
+            if event.type == pg.QUIT:
+                quit_game()
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_UP and self.direction != Direction.DOWN:
+                    self.direction = Direction.UP
+                if event.key == pg.K_DOWN and self.direction != Direction.UP:
+                    self.direction = Direction.DOWN
+                if event.key == pg.K_RIGHT and self.direction != Direction.LEFT:
+                    self.direction = Direction.RIGHT
+                if event.key == pg.K_LEFT and self.direction != Direction.RIGHT:
+                    self.direction = Direction.LEFT
+                if event.key == pg.K_ESCAPE:
+                    quit_game()
+                if event.key == pg.K_SPACE:
+                    self.g_stat = 1
+
+    def generate_new_food(self):
+        """ create a new food in the window"""
+        self.f_pos[0] = random.randint(5, ((WIN_W - 2) // SIZE)) * SIZE
+        self.f_pos[1] = random.randint(5, ((WIN_H - 2) // SIZE)) * SIZE
+
+    def get_food(self):
+        """ check if the snake get the food.
+        create a new food if the snake hit the food"""
+        if abs(self.s_pos[0] - self.f_pos[0]) < 20 and abs(self.s_pos[1] - self.f_pos[1]) < 20:
+            self.score += 10
+            self.generate_new_food()
+            self.check_hs()
+            if self.score % 100 == 0:
+                self.speed_up()
+        else:
+            self.s_body.pop()
+
+    def game_over(self):
+        """ Check the game state if the game is over"""
+        if self.s_pos[0] < SIZE or self.s_pos[0] > WIN_W - SIZE:
+            self.g_stat = 2
+        if self.s_pos[1] < SIZE or self.s_pos[1] > WIN_H - SIZE:
+            self.g_stat = 2
+        for blob in self.s_body[1:]:
+            if self.s_pos[0] == blob[0] and self.s_pos[1] == blob[1]:
+                self.g_stat = 2
+
+    def move_snake(self):
+        """ change the direction of the snake"""
+        if self.direction == Direction.UP:
+            self.s_pos[1] -= SIZE
+        if self.direction == Direction.DOWN:
+            self.s_pos[1] += SIZE
+        if self.direction == Direction.LEFT:
+            self.s_pos[0] -= SIZE
+        if self.direction == Direction.RIGHT:
+            self.s_pos[0] += SIZE
+        self.s_body.insert(0, list(self.s_pos))
+
+    def paint_hud(self):
+        """ show the textes in the game"""
+        self.show_text(f"Level: {self.level}", FG_P, 30, 0, Fon.fo16)
+        self.show_text(f"Score: {self.score}", FG_P, 125, 0, Fon.fo16)
+        self.show_text("Zum Beenden ESC-Taste drücken", FG_P, 850, 0, Fon.fo16)
+        self.show_text(f"Highscore: {str(self.hs_new)}", FG_P, 300, 0, Fon.fo16)
+
+    def restart_game(self):
+        """ this function rest all datas and set the snake on the startpoint"""
+        self.score = 0
+        self.level = 1
+        self.speed = 10
+        self.hs_old = self.hs_new
+        self.s_pos = [250, 250]
+        self.s_body = [[250, 250],
+                       [240, 250],
+                       [230, 250]]
+        self.user_text = ''
+
+    def repaint(self):
+        """ repaint the display for moving the snake"""
+        self.win.fill(pg.Color(BG_G))
+        for body in self.s_body:
+            self.win.blit(self.snake_head, (body[0] - (SIZE / 2), body[1] - (SIZE / 2)))
+        self.win.blit(self.food_pic, (self.f_pos[0] - (SIZE / 2),
+                                      self.f_pos[1] - (SIZE / 2)))
+
+    def show_hs_tab(self):
+        """ take the high-score data dict and show it on the display"""
+        pos_y_tab = 220
+        for i in range(10):
+            self.show_text(f"{self.hs_data[str(self.hs_int[i])]}",
+                           FG_P, WIN_M_W + 40, pos_y_tab, Fon.fo40)
+            self.show_text(f"{self.hs_int[i]}",
+                           FG_P, WIN_M_W + 280, pos_y_tab, Fon.fo40)
+            pos_y_tab += 40
+            pg.display.flip()
+
+    def show_go_message(self):
+        """ this message will be shown if the game is over"""
+        self.win.fill(BG_G)
+        self.win.blit(self.go_logo, (WIN_M_W - 90, Y_TOP))
+        self.show_hs_tab()
+        if self.hs_stat:
+            self.show_text(f"Neuer Highscore: {self.hs_new}",
+                           FG_A, WIN_M_W - 20, 140, Fon.fo40)
+            self.show_text("Name eingeben:",
+                           FG_A, WIN_M_W - 300, Y_BOT - 20, Fon.fo40)
+            self.entry_name()
+            self.hs_data[f"{self.hs_new}"] = self.user_text
+            self.hs_int.append(self.score)
+            self.sort_list()
+            self.w_data()
+        else:
+            self.show_text("High-score leider nicht geschlagen",
+                           FG_P, WIN_M_W - 100, Y_BOT - 23, Fon.fo40)
+            pg.display.update()
+            time.sleep(3)
+        self.restart_game()
+        self.win.fill(BG_G)
+        self.g_stat = 0
+
+    def show_text(self, text, col, p_x, p_y, fo_st):
+        """ a small def to create a textfield"""
+        act_text = fo_st.render(text, True, pg.Color(col))
+        rect_text = act_text.get_rect()
+        rect_text.x = p_x
+        rect_text.y = p_y
+        self.win.blit(act_text, rect_text)
+
+    def show_st_text(self):
+        """ show the start window"""
+        self.win.blit(self.pg_logo, (5, 669))
+        self.win.blit(self.sp_logo, (300, 30))
+        self.show_text("Highscores:", FG_P, WIN_M_W + 40, 160, Fon.fo40)
+        self.show_text("Start - SPACE-Taste drücken", FG_P, WIN_M_W - 50, Y_BOT + 20, Fon.fo16)
+        self.show_text("Beenden - ESC-Taste drücken", FG_P, WIN_M_W + 200, Y_BOT + 20, Fon.fo16)
+
+    def speed_up(self):
+        """ raise the speed and the level of the game"""
+        self.speed += 2
+        self.level += 1
+
+    def load_hs_list(self):
+        """ load the high-score data from json file"""
+        self.hs_data = r_data()
+        hs_keys_str = list(self.hs_data.keys())
+        for i, n in enumerate(hs_keys_str):
+            self.hs_int.append(int(n))
+            print(i)
+        self.sort_list()
+
+    def sort_list(self):
+        self.hs_int.sort()
+        self.hs_int.reverse()
+
+    def w_data(self):
+        """ WRITE THE NEW HIGH-SCORE TO THE .JSON FILE """
+        with open(PA_HS_FILE, "w", encoding='UTF-8') as file:
+            json.dump(self.hs_data, file)
+
+    def main_loop(self):
+        """ this is the main loop"""
+        while True:
+            self.event_control()
+            if self.g_stat == 0:
+                self.start_loop()
+            elif self.g_stat == 1:
+                self.game_loop()
+            elif self.g_stat == 2:
+                self.end_loop()
+            pg.display.update()
+            self.clock.tick(self.speed)
+
+    def start_loop(self):
+        """ this loop shows the start-window"""
+        self.show_hs_tab()
+        self.show_st_text()
+
+    def game_loop(self):
+        """ the game loop is the main function"""
+        self.move_snake()
+        self.get_food()
+        self.repaint()
+        self.game_over()
+        self.paint_hud()
+
+    def end_loop(self):
+        """ the end loop shows the high-score list and an entry-field"""
+        self.show_hs_tab()
+        self.show_go_message()
 
 
-def paint_hud():
-    """ show the textes in the game"""
-    show_text(f"Level: {level}", "white", (30, 0), FONT16)
-    show_text(f"Score: {score}", "white", (125, 0), FONT16)
-    show_text("Zum Beenden ESC-Taste drücken", "white", (900, 0), FONT16)
-    show_text(f"Highscore: {str(h_score_neu)}", "white", (300, 0), FONT16)
-    pg.draw.rect(win, color, input_rect)
-    text_surface = FONT16.render(user_text, True, (255, 255, 255))
-    win.blit(text_surface, (input_rect.x + 5, input_rect.y + 5))
-    input_rect.w = max(100, text_surface.get_width() + 10)
-    pg.display.flip()
+WIN_W, WIN_H, SIZE = 1080, 720, 20
 
-
-def show_starttext():
-    """ show the start window"""
-    show_text("SnakePie", "white", (500, 150), FONT60)
-    show_text("Zum starten SPACE-Taste drücken", "white", (500, 300), FONT40)
-    show_text(f"Highscore: {str(h_score_alt)}", "white", (500, 500), FONT40)
-    pg.display.flip()
-
-
-def check_h_score():
-    """ check if a new highscore exist"""
-    global h_score_neu
-    if score > h_score_neu:
-        h_score_neu = score
-
-
-def game_loop():
-    """ the game loop is the main function"""
-    direction = Direction.RIGHT
-    while not game_stat:
-        direction = handle_keys(direction)
-        show_starttext()
-
-    while game_stat:
-        direction = handle_keys(direction)
-        move_snake(direction)
-        get_food()
-        repaint()
-        game_over()
-        paint_hud()
-        pg.display.update()
-        refresh_controller.tick(speed)
-        check_h_score()
-
+WIN_M_W, WIN_M_H = WIN_W / 3, WIN_H / 3
+FG_A, FG_P, BG_G = (0, 255, 0), (255, 255, 255), (0, 0, 0)
+Y_TOP, Y_BOT = 30, 670
+PA_HS_FILE = str(pl.Path().absolute()) + "/PycharmProjects/snakepie/h_score.json"
+PA_PG_LOGO = str(pl.Path().absolute()) + "/PycharmProjects/snakepie/pg_logo.png"
+PA_SP_LOGO = str(pl.Path().absolute()) + "/PycharmProjects/snakepie/sp_logo.png"
+PA_F_PIC = str(pl.Path().absolute()) + "/PycharmProjects/snakepie/py_logo.png"
+PA_GO_LOGO = str(pl.Path().absolute()) + "/PycharmProjects/snakepie/go_logo.png"
+PA_BODY = str(pl.Path().absolute()) + "/PycharmProjects/snakepie/body.png"
 
 if __name__ == "__main__":
-    game_loop()
+    SnakeGame()
