@@ -309,11 +309,11 @@ class SnakeGame:
 
 class GamePics:
     """ define all pics of the game"""
-    PA_PG_LOGO = str(pl.Path().absolute()) + "/PycharmProjects/snakepie/pg_logo.png"
-    PA_SP_LOGO = str(pl.Path().absolute()) + "/PycharmProjects/snakepie/sp_logo.png"
-    PA_GO_LOGO = str(pl.Path().absolute()) + "/PycharmProjects/snakepie/go_logo.png"
-    PA_F_PIC = str(pl.Path().absolute()) + "/PycharmProjects/snakepie/py_logo.png"
-    PA_BODY = str(pl.Path().absolute()) + "/PycharmProjects/snakepie/body.png"
+    PA_PG_LOGO = str(pl.Path().absolute()) + "/snakepie/pg_logo.png"
+    PA_SP_LOGO = str(pl.Path().absolute()) + "/snakepie/sp_logo.png"
+    PA_GO_LOGO = str(pl.Path().absolute()) + "/snakepie/go_logo.png"
+    PA_F_PIC = str(pl.Path().absolute()) + "/snakepie/py_logo.png"
+    PA_BODY = str(pl.Path().absolute()) + "/snakepie/body.png"
     pg_logo = pg.image.load(PA_PG_LOGO)
     sp_logo = pg.image.load(PA_SP_LOGO)
     go_logo = pg.image.load(PA_GO_LOGO)
